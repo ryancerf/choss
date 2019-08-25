@@ -6,7 +6,7 @@
 
     <groupId>com.github.ryancerf</groupId>
     <artifactId>choss-maven-plugin</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>v0.02</version>
     <packaging>maven-plugin</packaging>
 
     <name>Choss Maven Plugin</name>
@@ -85,19 +85,6 @@
                     </execution>
                 </executions>
             </plugin>
-
-<!--            <plugin>-->
-<!--                <groupId>com.github.ryancerf</groupId>-->
-<!--                <artifactId>choss-maven-plugin</artifactId>-->
-<!--                <version>1.0-SNAPSHOT</version>-->
-<!--                <executions>-->
-<!--                    <execution>-->
-<!--                        <goals>-->
-<!--                            <goal>build-docs</goal>-->
-<!--                        </goals>-->
-<!--                    </execution>-->
-<!--                </executions>-->
-<!--            </plugin>-->
         </plugins>
 
     </build>
