@@ -5,9 +5,36 @@ Choss allows you to include compiled code snippets in your markdown files. Nothi
 
 ## Getting Started
 
-### Setup (Maven)
+### Setup (Maven & jitpack)
 
-#### Not available yet.
+Add the following to your pom.xml.
+
+```xml
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.github.ryancerf</groupId>
+                <artifactId>choss-maven-plugin</artifactId>
+                <version>v0.02</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>build-docs</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+```
 
 ### Write documentation.
 
