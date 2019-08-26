@@ -11,8 +11,10 @@ import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -32,6 +34,7 @@ class DocsBuilder {
   // State.
   private final List<CopyOperation> copyOperations = new ArrayList<>();
   private final List<BuildError> buildErrors = new ArrayList<>();
+  private final Set<SnippetDirective> seenSnippetDirectives = new HashSet<>();
   private PathMatcher contentMatcher;
 
   // Stats to show user.
@@ -58,8 +61,13 @@ class DocsBuilder {
     this.contentMatcher = fileSystemSupplier.get().getPathMatcher(contentGlob);
     this.log.info(
         "Building Documentation from: " + docsSourceDirectory + " to: " + docsTargetDirectory);
-    return processDirectory(
-        pathFactory.apply(docsSourceDirectory), pathFactory.apply(docsTargetDirectory));
+    boolean successful =
+        processDirectory(
+            pathFactory.apply(docsSourceDirectory), pathFactory.apply(docsTargetDirectory));
+    if (successful) {
+      warningForUnusedSourceSnippets();
+    }
+    return successful;
   }
 
   private boolean processDirectory(Path sourceDirectory, Path targetDirectory) throws IOException {
@@ -99,6 +107,7 @@ class DocsBuilder {
     // Resolve all the snippets
     int snippetCount = 0;
     for (SnippetDirectiveDefinition directiveDefinition : contentResults.getResult()) {
+      seenSnippetDirectives.add(directiveDefinition.getDirective());
       snippetCount++;
       ParseResult<Optional<Snippet>> snippetResults =
           snippetCache.parseOrGetSnippet(directiveDefinition);
@@ -142,6 +151,35 @@ class DocsBuilder {
           .forEach(File::delete);
     } else {
       Files.createDirectories(destination);
+    }
+  }
+
+  /**
+   * Throw a warning if there are any unused snippets in a parsed source file.
+   *
+   * <p>These warnings are best effort. It does not attempt to find every unused snippet because it
+   * is possible for a snippet to be located anywhere in the project.
+   */
+  private void warningForUnusedSourceSnippets() {
+    List<Snippet> unUsedSnippets = new ArrayList<>();
+    for (SnippetDirective snippetDirective : snippetCache.getSnippetMap().keySet()) {
+      if (!seenSnippetDirectives.contains(snippetDirective)) {
+        unUsedSnippets.add(snippetCache.getSnippetMap().get(snippetDirective));
+      }
+    }
+
+    if (!unUsedSnippets.isEmpty()) {
+      log.warn(
+          "Ran into unused snippet in parsed source file. Note we do not check every possible"
+              + " file for unused snippets");
+    }
+
+    for (Snippet unusedSnippet : unUsedSnippets) {
+      log.warn(
+          "Unused snippet (in source file): "
+              + unusedSnippet.getDirective()
+              + " line: "
+              + unusedSnippet.getLineNumber());
     }
   }
 

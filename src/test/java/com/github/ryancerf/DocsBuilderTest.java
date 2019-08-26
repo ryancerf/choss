@@ -31,7 +31,8 @@ class DocsBuilderTest extends FileSystemTest {
     SourceFileParser sourceFileParser = new SourceFileParser();
     SnippetCache snippetCache = new SnippetCache(sourceFileParser);
     IndentationFormatter indentationFormatter = new IndentationFormatter();
-    SnippetInjector snippetInjector = new SnippetInjector(snippetDirectiveParser, indentationFormatter);
+    SnippetInjector snippetInjector =
+        new SnippetInjector(snippetDirectiveParser, indentationFormatter);
     this.log = new LogMock();
 
     this.docsBuilder =
@@ -170,7 +171,7 @@ class DocsBuilderTest extends FileSystemTest {
   }
 
   @Test
-  void something() throws IOException {
+  void twoContentFilesWithSameSnippet() throws IOException {
     // Add Source file
     Path srcFile = sourceDirectory.resolve("test.java");
     Files.write(srcFile, Arrays.asList("//@@ snip_one", "code", "//@@ snip_one"));
@@ -190,5 +191,22 @@ class DocsBuilderTest extends FileSystemTest {
     List<String> contentLinesTwo =
         Files.lines(targetDirectory.resolve("content2.md")).collect(Collectors.toList());
     assertEquals(Arrays.asList("2", "code"), contentLinesTwo);
+  }
+
+  @Test
+  void unusedSnippetWarning() throws IOException {
+    // Add Source file
+    Path srcFile = sourceDirectory.resolve("test.java");
+    Files.write(
+        srcFile,
+        Arrays.asList(
+            "//@@ snip_one", "code", "//@@ snip_one", "//@@ snip_two", "code", "//@@ snip_two"));
+    Path contentFile = contentDirectory.resolve("content.md");
+    Files.write(contentFile, Arrays.asList("1", " @@snip [snip_one](" + srcFile + ")"));
+
+    docsBuilder.build(contentDirectory.toString(), "./target/docs/main/", "glob:**/*.md");
+
+    assertEquals(2, log.warning.size());
+    assertThat(log.warning.get(1)).contains("Unused snippet (in source file)");
   }
 }
